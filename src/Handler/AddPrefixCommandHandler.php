@@ -11,8 +11,11 @@
 
 namespace Webmozart\PhpScoper\Handler;
 
+use Symfony\Component\Finder\Finder;
 use Webmozart\Console\Api\Args\Args;
 use Webmozart\Console\Api\IO\IO;
+use Webmozart\PhpScoper\Finder\SymfonyPhpFileFinder;
+use Webmozart\PhpScoper\Parser\Parser;
 
 /**
  * Handles the "add-prefix" command.
@@ -35,6 +38,17 @@ class AddPrefixCommandHandler
         $paths = $args->getArgument('path');
 
         // search all $paths, add $prefix to all namespace declarations, use
+
+        $finder = new Finder();
+        $finder = new SymfonyPhpFileFinder($finder);
+
+        $files = $finder->findFiles($paths);
+        $parser = new Parser($files);
+
+        foreach ($files as $file) {
+            $parser->parseFile($file);
+        }
+
         // statements and class usages with fully-qualified class names
 
         $io->writeLine('...');
