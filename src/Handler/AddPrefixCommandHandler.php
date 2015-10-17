@@ -11,11 +11,15 @@
 
 namespace Webmozart\PhpScoper\Handler;
 
+use PhpParser\NodeTraverser;
+use PhpParser\NodeVisitor\NameResolver;
 use Symfony\Component\Finder\Finder;
 use Webmozart\Console\Api\Args\Args;
 use Webmozart\Console\Api\IO\IO;
 use Webmozart\PhpScoper\Finder\SymfonyPhpFileFinder;
+use Webmozart\PhpScoper\NamespaceManipulator\UseStatementManipulator;
 use Webmozart\PhpScoper\Parser\Parser;
+use Webmozart\PhpScoper\Parser\Visitor;
 
 /**
  * Handles the "add-prefix" command.
@@ -37,18 +41,27 @@ class AddPrefixCommandHandler
         $prefix = $args->getArgument('prefix');
         $paths = $args->getArgument('path');
 
-        // search all $paths, add $prefix to all namespace declarations, use
-
         $finder = new Finder();
         $finder = new SymfonyPhpFileFinder($finder);
 
         $files = $finder->findFiles($paths);
-        $parser = new Parser($files);
+
+        $visitor = new Visitor();
+        $visitor->addNamespaceManipulator(new UseStatementManipulator($prefix));
+
+        $traverser = new NodeTraverser();
+        $traverser->addVisitor(new NameResolver());
+        $traverser->addVisitor($visitor);
+
+        $parser = new Parser($traverser);
 
         foreach ($files as $file) {
-            $parser->parseFile($file);
+            $nodes = $parser->parseFile($file);
+
+            //@TODO dump nodes (only if changes occured)
         }
 
+        // search all $paths, add $prefix to all namespace declarations, use
         // statements and class usages with fully-qualified class names
 
         $io->writeLine('...');

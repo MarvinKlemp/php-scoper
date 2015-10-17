@@ -21,6 +21,7 @@ class SymfonyPhpFileFinder implements PhpFileFinder
 
     /**
      * @param string $directory
+     *
      * @return \Iterator
      */
     public function findFiles($directory)
